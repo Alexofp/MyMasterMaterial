@@ -1,12 +1,15 @@
-[gd_resource type="ShaderMaterial" script_class="MyMasterBodyMat" load_steps=3 format=3 uid="uid://6yacxubktjh8"]
+[gd_resource type="ShaderMaterial" script_class="MyMasterMaterial" load_steps=3 format=3 uid="uid://6yacxubktjh8"]
 
-[ext_resource type="Script" uid="uid://bk8a3rmejmdn" path="res://addons/MyMasterMaterial/Material/MyMasterBodyMat.gd" id="1_po4si"]
+[ext_resource type="Script" uid="uid://bk8a3rmejmdn" path="res://addons/MyMasterMaterial/Material/MyMasterMaterial.gd" id="1_po4si"]
 
 [sub_resource type="Shader" id="Shader_po4si"]
 code = "shader_type spatial;
 
 #define MY_FRESHNEL
 #define MY_RIMLIGHT
+#define MY_EDGE_OUTLINE
+#define MY_EDGE_OUTLINE_1
+#define MY_CUSTOM_SHADING
 
 
 render_mode
@@ -382,27 +385,40 @@ shader_parameter/albedo = Color(1, 1, 1, 1)
 shader_parameter/normal_scale = 1.0
 shader_parameter/ao_light_affect = 0.0
 shader_parameter/ao_mult = 1.0
-shader_parameter/roughness = 0.5
+shader_parameter/roughness = 1.0
 shader_parameter/specular = 0.5
 shader_parameter/metallic = 0.0
 shader_parameter/rim = 1.0
 shader_parameter/rim_tint = 0.5
 shader_parameter/uv1_scale = Vector3(1, 1, 1)
 shader_parameter/uv1_offset = Vector3(0, 0, 0)
-shader_parameter/freshnel_width = 5.0
-shader_parameter/freshnel_mod = 0.1
+shader_parameter/freshnel_width = 28.4
+shader_parameter/freshnel_mod = 0.18
 shader_parameter/freshnel_color = Color(0, 0, 0, 1)
+shader_parameter/outline1_thickness = 433.09
+shader_parameter/outline1_contrast = 1.0
+shader_parameter/outline1_color = Color(0, 0, 0, 1)
+shader_parameter/shadow_size = 0.165
+shader_parameter/shadow_blend = 0.161
+shader_parameter/shadow_extra_intensity = 0.0
+shader_parameter/shadow_color = Color(0, 0, 0, 1)
+shader_parameter/light_tint = Color(0.5, 0.5, 0.5, 1)
+shader_parameter/rimlight_size = 0.661
+shader_parameter/rimlight_blend = 0.345
+shader_parameter/rimlight_color = Color(1, 1, 1, 1)
+shader_parameter/normal_bias = Vector3(0, 0, 0)
+shader_parameter/light_bias = Vector3(0, 0, 0)
 script = ExtResource("1_po4si")
 pbrSetup = 0
 subsurfaceScattering = 0
 backlight = false
 freshnel = true
 rimlight = true
-edgeOutline = false
+edgeOutline = true
 edgeOutlineExtra = false
 outline = false
 toonShading = false
-customToonShading = false
+customToonShading = true
 alphaMask = false
 alphaTransparency = false
 doubleSided = false

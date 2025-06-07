@@ -1,6 +1,8 @@
 @tool
 extends ShaderMaterial
-class_name MyMasterBodyMat
+class_name MyMasterMaterial
+
+const ShaderPath = "res://addons/MyMasterMaterial/Material/MyMasterMaterial.gdshader"
 
 @export_group("PBR")
 enum PBRSetup {
@@ -116,7 +118,7 @@ static var cachedShaders:Dictionary = {}
 static var cachedUniformNames:Dictionary = {}
 var uniformNames:Array = []
 
-func copyFrom(otherShader:MyMasterBodyMat, ignoreUniforms:Array = []):
+func copyFrom(otherShader:MyMasterMaterial, ignoreUniforms:Array = []):
 	pbrSetup = otherShader.pbrSetup
 	backlight = otherShader.backlight
 	freshnel = otherShader.freshnel
@@ -201,7 +203,7 @@ func calculateShaderVariantString() -> String:
 	return join(theFlags, "|")
 
 func calculateShaderResource() -> Array:
-	var masterResource := preload("res://addons/MyMasterMaterial/Material/MyMasterBodyShader.gdshader")
+	var masterResource := preload(ShaderPath)
 	
 	var copyResource := masterResource.duplicate(true)
 	
@@ -280,7 +282,7 @@ func updateShader():
 	var currentVariant:String = calculateShaderVariantString()
 	
 	if(currentVariant == ""):
-		shader = preload("res://addons/MyMasterMaterial/Material/MyMasterBodyShader.gdshader")
+		shader = preload(ShaderPath)
 		return
 	
 	if(cachedShaders.has(currentVariant) && cachedUniformNames.has(currentVariant)):

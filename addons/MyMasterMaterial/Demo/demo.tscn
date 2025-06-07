@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://df7b3q683bdcy" path="res://addons/MyMasterMaterial/Demo/free_look_camera.gd" id="1_x1l52"]
 [ext_resource type="Material" uid="uid://6yacxubktjh8" path="res://addons/MyMasterMaterial/Demo/Mats/TestMat.tres" id="2_hyjrt"]
 [ext_resource type="PackedScene" uid="uid://63cl6gjpygpp" path="res://addons/MyMasterMaterial/Demo/Assets/CubeSmooth.glb" id="3_dlaip"]
-[ext_resource type="Script" uid="uid://bk8a3rmejmdn" path="res://addons/MyMasterMaterial/Material/MyMasterBodyMat.gd" id="4_ggw85"]
+[ext_resource type="Script" uid="uid://bk8a3rmejmdn" path="res://addons/MyMasterMaterial/Material/MyMasterMaterial.gd" id="4_ggw85"]
 [ext_resource type="PackedScene" uid="uid://bhli81lbgkknd" path="res://addons/MyMasterMaterial/Demo/Assets/Monkey.glb" id="4_j2bq8"]
 [ext_resource type="PackedScene" uid="uid://bgeehg8bpvp6m" path="res://addons/MyMasterMaterial/Demo/Assets/MonkeySmooth.glb" id="5_ggw85"]
 [ext_resource type="Texture2D" uid="uid://bdq4ndc7lqv1h" path="res://addons/MyMasterMaterial/Demo/Textures/cumlayer2.png" id="7_ggw85"]
@@ -1376,7 +1376,7 @@ cumLayer = true
 clearCache = false
 metadata/_custom_type_script = "uid://bk8a3rmejmdn"
 
-[sub_resource type="Shader" id="Shader_j2bq8"]
+[sub_resource type="Shader" id="Shader_h4o66"]
 code = "shader_type spatial;
 
 #define MY_COLORMASK
@@ -1760,7 +1760,7 @@ noise = SubResource("FastNoiseLite_607jx")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_xmd0r"]
 render_priority = 0
-shader = SubResource("Shader_j2bq8")
+shader = SubResource("Shader_h4o66")
 shader_parameter/albedo = Color(0, 0, 0, 1)
 shader_parameter/normal_scale = 1.0
 shader_parameter/ao_light_affect = 0.0
