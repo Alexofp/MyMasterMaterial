@@ -41,10 +41,10 @@ uniform sampler2D texture_emission : source_color, hint_default_black, filter_li
 uniform vec4 albedo : source_color = vec4(1.0);
 uniform float normal_scale : hint_range(-16.0, 16.0) = 1.0;
 uniform float ao_light_affect : hint_range(0.0, 1.0, 0.01) = 0.0;
-uniform float ao_mult : hint_range(0.0, 1.0, 0.01) = 1.0;
-uniform float roughness : hint_range(0.0, 1.0) = 1.0;
+uniform float ao_mult : hint_range(0.0, 2.0, 0.01) = 1.0;
+uniform float roughness : hint_range(0.0, 2.0) = 1.0;
 uniform float specular : hint_range(0.0, 1.0, 0.01) = 0.5;
-uniform float metallic : hint_range(0.0, 1.0, 0.01) = 1.0;
+uniform float metallic : hint_range(0.0, 2.0, 0.01) = 1.0;
 //#define MY_PBR_EMISSION
 #ifdef MY_PBR_EMISSION
 uniform vec3 emission : source_color = vec3(1.0);
@@ -153,6 +153,15 @@ uniform float messCutoff : hint_range(0.0, 1.0) = 0.0;
 uniform float messSmoothSize : hint_range(0.0, 1.0) = 0.1;
 #endif
 
+// ratio 0.0 returns 0.0
+// ratio 0.5 returns value*0.5
+// ratio 1.0 returns value
+// ratio 1.5 returns value*0.5 + 0.5
+// ratio 2.0 returns 1.0
+float bilinearLerp(float value, float ratio) {
+	return value * (clamp(ratio, 0.0, 1.0) - clamp(-1.0+ratio, 0.0, 1.0)) + 1.0 * max(ratio-1.0, 0.0);
+}
+
 void vertex() {
 	UV = UV * uv1_scale.xy + uv1_offset.xy;
 }
@@ -166,7 +175,7 @@ void fragment() {
 #endif
 
 	vec4 albedo_tex = texture(texture_albedo, base_uv);
-	vec4 orm_tex = vec4(1.0);
+	vec4 orm_tex = vec4(1.0, 1.0, 0.0, 1.0);
 #ifdef MY_PBR_ORM
 	orm_tex = texture(texture_orm, base_uv);
 #endif
@@ -186,9 +195,9 @@ void fragment() {
 	ALBEDO = albedo.rgb * albedo_tex.rgb;
 	NORMAL_MAP = texture(texture_normal, base_uv).rgb;
 	
-	AO = orm_tex.r * ao_mult;
-	ROUGHNESS = orm_tex.g * roughness;
-	METALLIC = orm_tex.b * metallic;
+	AO = bilinearLerp(orm_tex.r, ao_mult);
+	ROUGHNESS = bilinearLerp(orm_tex.g, roughness);
+	METALLIC = bilinearLerp(orm_tex.b, metallic);
 
 	NORMAL_MAP_DEPTH = normal_scale;
 	AO_LIGHT_AFFECT = ao_light_affect;
