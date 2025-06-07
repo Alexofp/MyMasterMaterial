@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dmsnfqdpq6uex"
-path.s3tc="res://.godot/imported/cumlayer.png-68fcc921bfacd5152150c9cc58b02cb9.s3tc.ctex"
+uid="uid://bdq4ndc7lqv1h"
+path.s3tc="res://.godot/imported/gluelayer2.png-0335528b48dbbc2607525d82b877fd82.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://addons/MyMasterMaterial/Demo/Textures/cumlayer.png"
-dest_files=["res://.godot/imported/cumlayer.png-68fcc921bfacd5152150c9cc58b02cb9.s3tc.ctex"]
+source_file="res://addons/MyMasterMaterial/Demo/Textures/gluelayer2.png"
+dest_files=["res://.godot/imported/gluelayer2.png-0335528b48dbbc2607525d82b877fd82.s3tc.ctex"]
 
 [params]
 

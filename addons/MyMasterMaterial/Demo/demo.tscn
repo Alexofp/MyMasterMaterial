@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=4 uid="uid://b3jbx4inwtt72"]
+[gd_scene load_steps=33 format=4 uid="uid://b3jbx4inwtt72"]
 
 [ext_resource type="Script" uid="uid://df7b3q683bdcy" path="res://addons/MyMasterMaterial/Demo/free_look_camera.gd" id="1_x1l52"]
 [ext_resource type="Material" uid="uid://6yacxubktjh8" path="res://addons/MyMasterMaterial/Demo/Mats/TestMat.tres" id="2_hyjrt"]
@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://bk8a3rmejmdn" path="res://addons/MyMasterMaterial/Material/MyMasterMaterial.gd" id="4_ggw85"]
 [ext_resource type="PackedScene" uid="uid://bhli81lbgkknd" path="res://addons/MyMasterMaterial/Demo/Assets/Monkey.glb" id="4_j2bq8"]
 [ext_resource type="PackedScene" uid="uid://bgeehg8bpvp6m" path="res://addons/MyMasterMaterial/Demo/Assets/MonkeySmooth.glb" id="5_ggw85"]
-[ext_resource type="Texture2D" uid="uid://bdq4ndc7lqv1h" path="res://addons/MyMasterMaterial/Demo/Textures/cumlayer2.png" id="7_ggw85"]
+[ext_resource type="Texture2D" uid="uid://bdq4ndc7lqv1h" path="res://addons/MyMasterMaterial/Demo/Textures/gluelayer2.png" id="7_ggw85"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_v2y10"]
 sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
@@ -202,18 +202,18 @@ uniform float outline2_contrast : hint_range(0.0, 5.0, 0.01) = 1.0;
 uniform vec4 outline2_color : source_color;
 #endif
 
-//#define MY_CUMLAYER
-#ifdef MY_CUMLAYER
-uniform sampler2D texture_cum_layer: source_color, hint_default_white, filter_linear_mipmap, repeat_enable;
-uniform float cum_layer_scale : hint_range(0.0, 10.0) = 1.0;
+//#define MY_MESSLAYER
+#ifdef MY_MESSLAYER
+uniform sampler2D texture_mess_layer: source_color, hint_default_white, filter_linear_mipmap, repeat_enable;
+uniform float messLayerScale : hint_range(0.0, 10.0) = 1.0;
 
-uniform sampler2D texture_cum_mask: hint_default_white, filter_linear_mipmap, repeat_enable;
-uniform vec4 cum_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
-uniform float cumRoughness : hint_range(0.0, 1.0) = 0.0;
-uniform float cumScroll : hint_range(0.0, 1.0) = 0.0;
+uniform sampler2D texture_mess_mask: hint_default_white, filter_linear_mipmap, repeat_enable;
+uniform vec4 messColor : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+uniform float messRoughness : hint_range(0.0, 1.0) = 0.0;
+uniform float messScroll : hint_range(0.0, 1.0) = 0.0;
 
-uniform float cumCutoff : hint_range(0.0, 1.0) = 0.0;
-uniform float cumSmoothSize : hint_range(0.0, 1.0) = 0.1;
+uniform float messCutoff : hint_range(0.0, 1.0) = 0.0;
+uniform float messSmoothSize : hint_range(0.0, 1.0) = 0.1;
 #endif
 
 void vertex() {
@@ -331,23 +331,23 @@ void fragment() {
 	ROUGHNESS *= detail_rough_tex_global.g;
 #endif
 
-#ifdef MY_CUMLAYER
+#ifdef MY_MESSLAYER
 
-	vec4 cum_tex = texture(texture_cum_layer, (base_uv + vec2(cumScroll*3.3, cumScroll) - vec2(0.0, TIME*0.001))*cum_layer_scale);
-	vec4 cum_mask_tex = texture(texture_cum_mask, base_uv);
+	vec4 mess_tex = texture(texture_mess_layer, (base_uv + vec2(messScroll*3.3, messScroll) - vec2(0.0, TIME*0.001))*messLayerScale);
+	vec4 mess_mask_tex = texture(texture_mess_mask, base_uv);
 	
-	float cumValue = cum_tex.a;
-	float cumAlphaAlpha = smoothstep(cumCutoff, cumCutoff + cumSmoothSize, cumValue * (1.0 - cumSmoothSize) + cumSmoothSize);
+	float messValue = mess_tex.a;
+	float messAlphaAlpha = smoothstep(messCutoff, messCutoff + messSmoothSize, messValue * (1.0 - messSmoothSize) + messSmoothSize);
 	
-	float cumAlpha = cum_tex.a * cum_mask_tex.r * cum_color.a * cumAlphaAlpha;
+	float messAlpha = mess_tex.a * mess_mask_tex.r * messColor.a * messAlphaAlpha;
 	
-	ALBEDO = mix(ALBEDO, cum_tex.rgb*cum_color.rgb, cumAlpha);
-	ROUGHNESS = mix(ROUGHNESS, cumRoughness, cumAlpha);
+	ALBEDO = mix(ALBEDO, mess_tex.rgb*messColor.rgb, messAlpha);
+	ROUGHNESS = mix(ROUGHNESS, messRoughness, messAlpha);
 	
-	BACKLIGHT = mix(BACKLIGHT, vec3(0.5, 0.5, 0.5), cumAlpha);
-	//SPECULAR = 3.0;//mix(SPECULAR, 30.0, min(cumAlpha*3.0, 1.0));
-	//RIM = mix(RIM, 1.0, cumAlpha);
-	//RIM_TINT = mix(RIM_TINT, 1.0, cumAlpha);
+	BACKLIGHT = mix(BACKLIGHT, vec3(0.5, 0.5, 0.5), messAlpha);
+	//SPECULAR = 3.0;//mix(SPECULAR, 30.0, min(messAlpha*3.0, 1.0));
+	//RIM = mix(RIM, 1.0, messAlpha);
+	//RIM_TINT = mix(RIM_TINT, 1.0, messAlpha);
 #endif
 
 #ifdef MY_EDGE_OUTLINE
@@ -471,7 +471,7 @@ colorMask = false
 uvBasedDiscard = false
 globalDetailMask = false
 globalDetailRoughMask = false
-cumLayer = false
+messLayer = false
 clearCache = false
 metadata/_custom_type_script = "uid://bk8a3rmejmdn"
 
@@ -620,18 +620,18 @@ uniform float outline2_contrast : hint_range(0.0, 5.0, 0.01) = 1.0;
 uniform vec4 outline2_color : source_color;
 #endif
 
-//#define MY_CUMLAYER
-#ifdef MY_CUMLAYER
-uniform sampler2D texture_cum_layer: source_color, hint_default_white, filter_linear_mipmap, repeat_enable;
-uniform float cum_layer_scale : hint_range(0.0, 10.0) = 1.0;
+//#define MY_MESSLAYER
+#ifdef MY_MESSLAYER
+uniform sampler2D texture_mess_layer: source_color, hint_default_white, filter_linear_mipmap, repeat_enable;
+uniform float messLayerScale : hint_range(0.0, 10.0) = 1.0;
 
-uniform sampler2D texture_cum_mask: hint_default_white, filter_linear_mipmap, repeat_enable;
-uniform vec4 cum_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
-uniform float cumRoughness : hint_range(0.0, 1.0) = 0.0;
-uniform float cumScroll : hint_range(0.0, 1.0) = 0.0;
+uniform sampler2D texture_mess_mask: hint_default_white, filter_linear_mipmap, repeat_enable;
+uniform vec4 messColor : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+uniform float messRoughness : hint_range(0.0, 1.0) = 0.0;
+uniform float messScroll : hint_range(0.0, 1.0) = 0.0;
 
-uniform float cumCutoff : hint_range(0.0, 1.0) = 0.0;
-uniform float cumSmoothSize : hint_range(0.0, 1.0) = 0.1;
+uniform float messCutoff : hint_range(0.0, 1.0) = 0.0;
+uniform float messSmoothSize : hint_range(0.0, 1.0) = 0.1;
 #endif
 
 void vertex() {
@@ -749,23 +749,23 @@ void fragment() {
 	ROUGHNESS *= detail_rough_tex_global.g;
 #endif
 
-#ifdef MY_CUMLAYER
+#ifdef MY_MESSLAYER
 
-	vec4 cum_tex = texture(texture_cum_layer, (base_uv + vec2(cumScroll*3.3, cumScroll) - vec2(0.0, TIME*0.001))*cum_layer_scale);
-	vec4 cum_mask_tex = texture(texture_cum_mask, base_uv);
+	vec4 mess_tex = texture(texture_mess_layer, (base_uv + vec2(messScroll*3.3, messScroll) - vec2(0.0, TIME*0.001))*messLayerScale);
+	vec4 mess_mask_tex = texture(texture_mess_mask, base_uv);
 	
-	float cumValue = cum_tex.a;
-	float cumAlphaAlpha = smoothstep(cumCutoff, cumCutoff + cumSmoothSize, cumValue * (1.0 - cumSmoothSize) + cumSmoothSize);
+	float messValue = mess_tex.a;
+	float messAlphaAlpha = smoothstep(messCutoff, messCutoff + messSmoothSize, messValue * (1.0 - messSmoothSize) + messSmoothSize);
 	
-	float cumAlpha = cum_tex.a * cum_mask_tex.r * cum_color.a * cumAlphaAlpha;
+	float messAlpha = mess_tex.a * mess_mask_tex.r * messColor.a * messAlphaAlpha;
 	
-	ALBEDO = mix(ALBEDO, cum_tex.rgb*cum_color.rgb, cumAlpha);
-	ROUGHNESS = mix(ROUGHNESS, cumRoughness, cumAlpha);
+	ALBEDO = mix(ALBEDO, mess_tex.rgb*messColor.rgb, messAlpha);
+	ROUGHNESS = mix(ROUGHNESS, messRoughness, messAlpha);
 	
-	BACKLIGHT = mix(BACKLIGHT, vec3(0.5, 0.5, 0.5), cumAlpha);
-	//SPECULAR = 3.0;//mix(SPECULAR, 30.0, min(cumAlpha*3.0, 1.0));
-	//RIM = mix(RIM, 1.0, cumAlpha);
-	//RIM_TINT = mix(RIM_TINT, 1.0, cumAlpha);
+	BACKLIGHT = mix(BACKLIGHT, vec3(0.5, 0.5, 0.5), messAlpha);
+	//SPECULAR = 3.0;//mix(SPECULAR, 30.0, min(messAlpha*3.0, 1.0));
+	//RIM = mix(RIM, 1.0, messAlpha);
+	//RIM_TINT = mix(RIM_TINT, 1.0, messAlpha);
 #endif
 
 #ifdef MY_EDGE_OUTLINE
@@ -849,7 +849,7 @@ void light(){
 }
 #endif"
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_h4o66"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2b8vd"]
 render_priority = 0
 shader = SubResource("Shader_607jx")
 shader_parameter/albedo = Color(0.57, 0.1311, 0.1311, 1)
@@ -885,7 +885,7 @@ colorMask = false
 uvBasedDiscard = false
 globalDetailMask = false
 globalDetailRoughMask = false
-cumLayer = false
+messLayer = null
 clearCache = false
 metadata/_custom_type_script = "uid://bk8a3rmejmdn"
 
@@ -923,50 +923,10 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_a63h6")
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_2b8vd"]
-render_priority = 0
-shader = SubResource("Shader_607jx")
-shader_parameter/albedo = Color(0.57, 0.1311, 0.1311, 1)
-shader_parameter/normal_scale = 1.0
-shader_parameter/ao_light_affect = 0.0
-shader_parameter/ao_mult = 1.0
-shader_parameter/roughness = 1.0
-shader_parameter/specular = 0.5
-shader_parameter/metallic = 0.0
-shader_parameter/uv1_scale = Vector3(1, 1, 1)
-shader_parameter/uv1_offset = Vector3(0, 0, 0)
-shader_parameter/outline1_thickness = 988.66
-shader_parameter/outline1_contrast = 1.89
-shader_parameter/outline1_color = Color(0.83, 0.553333, 0, 1)
-shader_parameter/outline2_thickness = 459.47
-shader_parameter/outline2_contrast = 2.27
-shader_parameter/outline2_color = Color(0, 0, 0.686275, 1)
-script = ExtResource("4_ggw85")
-pbrSetup = 0
-subsurfaceScattering = 0
-backlight = false
-freshnel = false
-rimlight = false
-edgeOutline = true
-edgeOutlineExtra = true
-outline = false
-toonShading = false
-customToonShading = false
-alphaMask = false
-alphaTransparency = false
-doubleSided = false
-colorMask = false
-uvBasedDiscard = false
-globalDetailMask = false
-globalDetailRoughMask = false
-cumLayer = false
-clearCache = false
-metadata/_custom_type_script = "uid://bk8a3rmejmdn"
-
 [sub_resource type="Shader" id="Shader_4gw31"]
 code = "shader_type spatial;
 
-#define MY_CUMLAYER
+#define MY_MESSLAYER
 
 
 render_mode
@@ -1106,18 +1066,18 @@ uniform float outline2_contrast : hint_range(0.0, 5.0, 0.01) = 1.0;
 uniform vec4 outline2_color : source_color;
 #endif
 
-//#define MY_CUMLAYER
-#ifdef MY_CUMLAYER
-uniform sampler2D texture_cum_layer: source_color, hint_default_white, filter_linear_mipmap, repeat_enable;
-uniform float cum_layer_scale : hint_range(0.0, 10.0) = 1.0;
+//#define MY_MESSLAYER
+#ifdef MY_MESSLAYER
+uniform sampler2D texture_mess_layer: source_color, hint_default_white, filter_linear_mipmap, repeat_enable;
+uniform float messLayerScale : hint_range(0.0, 10.0) = 1.0;
 
-uniform sampler2D texture_cum_mask: hint_default_white, filter_linear_mipmap, repeat_enable;
-uniform vec4 cum_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
-uniform float cumRoughness : hint_range(0.0, 1.0) = 0.0;
-uniform float cumScroll : hint_range(0.0, 1.0) = 0.0;
+uniform sampler2D texture_mess_mask: hint_default_white, filter_linear_mipmap, repeat_enable;
+uniform vec4 messColor : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+uniform float messRoughness : hint_range(0.0, 1.0) = 0.0;
+uniform float messScroll : hint_range(0.0, 1.0) = 0.0;
 
-uniform float cumCutoff : hint_range(0.0, 1.0) = 0.0;
-uniform float cumSmoothSize : hint_range(0.0, 1.0) = 0.1;
+uniform float messCutoff : hint_range(0.0, 1.0) = 0.0;
+uniform float messSmoothSize : hint_range(0.0, 1.0) = 0.1;
 #endif
 
 void vertex() {
@@ -1235,23 +1195,23 @@ void fragment() {
 	ROUGHNESS *= detail_rough_tex_global.g;
 #endif
 
-#ifdef MY_CUMLAYER
+#ifdef MY_MESSLAYER
 
-	vec4 cum_tex = texture(texture_cum_layer, (base_uv + vec2(cumScroll*3.3, cumScroll) - vec2(0.0, TIME*0.001))*cum_layer_scale);
-	vec4 cum_mask_tex = texture(texture_cum_mask, base_uv);
+	vec4 mess_tex = texture(texture_mess_layer, (base_uv + vec2(messScroll*3.3, messScroll) - vec2(0.0, TIME*0.001))*messLayerScale);
+	vec4 mess_mask_tex = texture(texture_mess_mask, base_uv);
 	
-	float cumValue = cum_tex.a;
-	float cumAlphaAlpha = smoothstep(cumCutoff, cumCutoff + cumSmoothSize, cumValue * (1.0 - cumSmoothSize) + cumSmoothSize);
+	float messValue = mess_tex.a;
+	float messAlphaAlpha = smoothstep(messCutoff, messCutoff + messSmoothSize, messValue * (1.0 - messSmoothSize) + messSmoothSize);
 	
-	float cumAlpha = cum_tex.a * cum_mask_tex.r * cum_color.a * cumAlphaAlpha;
+	float messAlpha = mess_tex.a * mess_mask_tex.r * messColor.a * messAlphaAlpha;
 	
-	ALBEDO = mix(ALBEDO, cum_tex.rgb*cum_color.rgb, cumAlpha);
-	ROUGHNESS = mix(ROUGHNESS, cumRoughness, cumAlpha);
+	ALBEDO = mix(ALBEDO, mess_tex.rgb*messColor.rgb, messAlpha);
+	ROUGHNESS = mix(ROUGHNESS, messRoughness, messAlpha);
 	
-	BACKLIGHT = mix(BACKLIGHT, vec3(0.5, 0.5, 0.5), cumAlpha);
-	//SPECULAR = 3.0;//mix(SPECULAR, 30.0, min(cumAlpha*3.0, 1.0));
-	//RIM = mix(RIM, 1.0, cumAlpha);
-	//RIM_TINT = mix(RIM_TINT, 1.0, cumAlpha);
+	BACKLIGHT = mix(BACKLIGHT, vec3(0.5, 0.5, 0.5), messAlpha);
+	//SPECULAR = 3.0;//mix(SPECULAR, 30.0, min(messAlpha*3.0, 1.0));
+	//RIM = mix(RIM, 1.0, messAlpha);
+	//RIM_TINT = mix(RIM_TINT, 1.0, messAlpha);
 #endif
 
 #ifdef MY_EDGE_OUTLINE
@@ -1335,6 +1295,17 @@ void light(){
 }
 #endif"
 
+[sub_resource type="Gradient" id="Gradient_h4o66"]
+offsets = PackedFloat32Array(0.453532, 0.609665, 1)
+colors = PackedColorArray(0, 0, 0, 1, 0.734694, 0.734694, 0.734694, 1, 1, 1, 1, 1)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_2b8vd"]
+frequency = 0.0049
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_xmd0r"]
+color_ramp = SubResource("Gradient_h4o66")
+noise = SubResource("FastNoiseLite_2b8vd")
+
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_4wvf8"]
 render_priority = 0
 shader = SubResource("Shader_4gw31")
@@ -1347,13 +1318,14 @@ shader_parameter/specular = 0.5
 shader_parameter/metallic = 0.0
 shader_parameter/uv1_scale = Vector3(1, 1, 1)
 shader_parameter/uv1_offset = Vector3(0, 0, 0)
-shader_parameter/texture_cum_layer = ExtResource("7_ggw85")
-shader_parameter/cum_layer_scale = 2.173
-shader_parameter/cum_color = Color(1, 1, 1, 1)
-shader_parameter/cumRoughness = 0.0
-shader_parameter/cumScroll = 0.0
-shader_parameter/cumCutoff = 0.0
-shader_parameter/cumSmoothSize = 0.1
+shader_parameter/texture_mess_layer = ExtResource("7_ggw85")
+shader_parameter/messLayerScale = 2.0
+shader_parameter/texture_mess_mask = SubResource("NoiseTexture2D_xmd0r")
+shader_parameter/messColor = Color(0.24, 0.1792, 0.1488, 1)
+shader_parameter/messRoughness = 0.0
+shader_parameter/messScroll = 0.0
+shader_parameter/messCutoff = 0.0
+shader_parameter/messSmoothSize = 0.1
 script = ExtResource("4_ggw85")
 pbrSetup = 0
 subsurfaceScattering = 0
@@ -1372,7 +1344,7 @@ colorMask = false
 uvBasedDiscard = false
 globalDetailMask = false
 globalDetailRoughMask = false
-cumLayer = true
+messLayer = true
 clearCache = false
 metadata/_custom_type_script = "uid://bk8a3rmejmdn"
 
@@ -1519,18 +1491,18 @@ uniform float outline2_contrast : hint_range(0.0, 5.0, 0.01) = 1.0;
 uniform vec4 outline2_color : source_color;
 #endif
 
-//#define MY_CUMLAYER
-#ifdef MY_CUMLAYER
-uniform sampler2D texture_cum_layer: source_color, hint_default_white, filter_linear_mipmap, repeat_enable;
-uniform float cum_layer_scale : hint_range(0.0, 10.0) = 1.0;
+//#define MY_MESSLAYER
+#ifdef MY_MESSLAYER
+uniform sampler2D texture_mess_layer: source_color, hint_default_white, filter_linear_mipmap, repeat_enable;
+uniform float messLayerScale : hint_range(0.0, 10.0) = 1.0;
 
-uniform sampler2D texture_cum_mask: hint_default_white, filter_linear_mipmap, repeat_enable;
-uniform vec4 cum_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
-uniform float cumRoughness : hint_range(0.0, 1.0) = 0.0;
-uniform float cumScroll : hint_range(0.0, 1.0) = 0.0;
+uniform sampler2D texture_mess_mask: hint_default_white, filter_linear_mipmap, repeat_enable;
+uniform vec4 messColor : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+uniform float messRoughness : hint_range(0.0, 1.0) = 0.0;
+uniform float messScroll : hint_range(0.0, 1.0) = 0.0;
 
-uniform float cumCutoff : hint_range(0.0, 1.0) = 0.0;
-uniform float cumSmoothSize : hint_range(0.0, 1.0) = 0.1;
+uniform float messCutoff : hint_range(0.0, 1.0) = 0.0;
+uniform float messSmoothSize : hint_range(0.0, 1.0) = 0.1;
 #endif
 
 void vertex() {
@@ -1648,23 +1620,23 @@ void fragment() {
 	ROUGHNESS *= detail_rough_tex_global.g;
 #endif
 
-#ifdef MY_CUMLAYER
+#ifdef MY_MESSLAYER
 
-	vec4 cum_tex = texture(texture_cum_layer, (base_uv + vec2(cumScroll*3.3, cumScroll) - vec2(0.0, TIME*0.001))*cum_layer_scale);
-	vec4 cum_mask_tex = texture(texture_cum_mask, base_uv);
+	vec4 mess_tex = texture(texture_mess_layer, (base_uv + vec2(messScroll*3.3, messScroll) - vec2(0.0, TIME*0.001))*messLayerScale);
+	vec4 mess_mask_tex = texture(texture_mess_mask, base_uv);
 	
-	float cumValue = cum_tex.a;
-	float cumAlphaAlpha = smoothstep(cumCutoff, cumCutoff + cumSmoothSize, cumValue * (1.0 - cumSmoothSize) + cumSmoothSize);
+	float messValue = mess_tex.a;
+	float messAlphaAlpha = smoothstep(messCutoff, messCutoff + messSmoothSize, messValue * (1.0 - messSmoothSize) + messSmoothSize);
 	
-	float cumAlpha = cum_tex.a * cum_mask_tex.r * cum_color.a * cumAlphaAlpha;
+	float messAlpha = mess_tex.a * mess_mask_tex.r * messColor.a * messAlphaAlpha;
 	
-	ALBEDO = mix(ALBEDO, cum_tex.rgb*cum_color.rgb, cumAlpha);
-	ROUGHNESS = mix(ROUGHNESS, cumRoughness, cumAlpha);
+	ALBEDO = mix(ALBEDO, mess_tex.rgb*messColor.rgb, messAlpha);
+	ROUGHNESS = mix(ROUGHNESS, messRoughness, messAlpha);
 	
-	BACKLIGHT = mix(BACKLIGHT, vec3(0.5, 0.5, 0.5), cumAlpha);
-	//SPECULAR = 3.0;//mix(SPECULAR, 30.0, min(cumAlpha*3.0, 1.0));
-	//RIM = mix(RIM, 1.0, cumAlpha);
-	//RIM_TINT = mix(RIM_TINT, 1.0, cumAlpha);
+	BACKLIGHT = mix(BACKLIGHT, vec3(0.5, 0.5, 0.5), messAlpha);
+	//SPECULAR = 3.0;//mix(SPECULAR, 30.0, min(messAlpha*3.0, 1.0));
+	//RIM = mix(RIM, 1.0, messAlpha);
+	//RIM_TINT = mix(RIM_TINT, 1.0, messAlpha);
 #endif
 
 #ifdef MY_EDGE_OUTLINE
@@ -1792,7 +1764,7 @@ colorMask = true
 uvBasedDiscard = false
 globalDetailMask = false
 globalDetailRoughMask = false
-cumLayer = false
+messLayer = null
 clearCache = false
 metadata/_custom_type_script = "uid://bk8a3rmejmdn"
 
@@ -1836,7 +1808,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_4gw31")
 transform = Transform3D(0.536766, 0, 0, 0, 0.536766, 0, 0, 0, 0.536766, 11.9205, 0, 0)
 
 [node name="CubeSmooth" parent="CubeSmooth2" index="0"]
-surface_material_override/0 = SubResource("ShaderMaterial_h4o66")
+surface_material_override/0 = SubResource("ShaderMaterial_2b8vd")
 
 [node name="Monkey" parent="." instance=ExtResource("4_j2bq8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.73379, 0, 0)

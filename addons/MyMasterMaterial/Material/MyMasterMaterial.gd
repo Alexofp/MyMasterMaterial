@@ -102,9 +102,9 @@ enum SubsurfaceScatteringType {
 	set(value):
 		globalDetailRoughMask = value
 		updateShader()
-@export var cumLayer:bool = false:
+@export var messLayer:bool = false:
 	set(value):
-		cumLayer = value
+		messLayer = value
 		updateShader()
 
 @export_group("CACHE")
@@ -136,7 +136,7 @@ func copyFrom(otherShader:MyMasterMaterial, ignoreUniforms:Array = []):
 	outline = otherShader.outline
 	edgeOutlineExtra = otherShader.edgeOutlineExtra
 	edgeOutline = otherShader.edgeOutline
-	cumLayer = otherShader.cumLayer
+	messLayer = otherShader.messLayer
 	updateShader()
 	#var allUniforms:Array = shader.get_shader_uniform_list()
 	for theUniformName in uniformNames:
@@ -198,8 +198,8 @@ func calculateShaderVariantString() -> String:
 		theFlags.append("eo")
 	if(edgeOutlineExtra):
 		theFlags.append("eoe")
-	if(cumLayer):
-		theFlags.append("cl")
+	if(messLayer):
+		theFlags.append("ml")
 	return join(theFlags, "|")
 
 func calculateShaderResource() -> Array:
@@ -261,8 +261,8 @@ func calculateShaderResource() -> Array:
 		defines.append("MY_EDGE_OUTLINE_2")
 	if(customToonShading):
 		defines.append("MY_CUSTOM_SHADING")
-	if(cumLayer):
-		defines.append("MY_CUMLAYER")
+	if(messLayer):
+		defines.append("MY_MESSLAYER")
 	var definesText:String = ""
 	for define in defines:
 		definesText += "#define "+define+"\n"
