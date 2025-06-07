@@ -85,6 +85,10 @@ enum SubsurfaceScatteringType {
 	set(value):
 		doubleSided = value
 		updateShader()
+@export var unshaded:bool = false:
+	set(value):
+		unshaded = value
+		updateShader()
 @export var colorMask:bool = false:
 	set(value):
 		colorMask = value
@@ -105,6 +109,10 @@ enum SubsurfaceScatteringType {
 @export var messLayer:bool = false:
 	set(value):
 		messLayer = value
+		updateShader()
+@export var albedoMatcap:bool = false:
+	set(value):
+		albedoMatcap = value
 		updateShader()
 
 @export_group("CACHE")
@@ -131,12 +139,14 @@ func copyFrom(otherShader:MyMasterMaterial, ignoreUniforms:Array = []):
 	globalDetailRoughMask = otherShader.globalDetailRoughMask
 	colorMask = otherShader.colorMask
 	doubleSided = otherShader.doubleSided
+	unshaded = otherShader.unshaded
 	toonShading = otherShader.toonShading
 	customToonShading = otherShader.customToonShading
 	outline = otherShader.outline
 	edgeOutlineExtra = otherShader.edgeOutlineExtra
 	edgeOutline = otherShader.edgeOutline
 	messLayer = otherShader.messLayer
+	albedoMatcap = otherShader.albedoMatcap
 	updateShader()
 	#var allUniforms:Array = shader.get_shader_uniform_list()
 	for theUniformName in uniformNames:
@@ -192,6 +202,8 @@ func calculateShaderVariantString() -> String:
 		theFlags.append("cm")
 	if(doubleSided):
 		theFlags.append("ds")
+	if(unshaded):
+		theFlags.append("un")
 	if(outline):
 		theFlags.append("ou")
 	if(edgeOutline):
@@ -200,6 +212,8 @@ func calculateShaderVariantString() -> String:
 		theFlags.append("eoe")
 	if(messLayer):
 		theFlags.append("ml")
+	if(albedoMatcap):
+		theFlags.append("am")
 	return join(theFlags, "|")
 
 func calculateShaderResource() -> Array:
@@ -251,6 +265,8 @@ func calculateShaderResource() -> Array:
 		defines.append("MY_COLORMASK")
 	if(doubleSided):
 		defines.append("MY_DOUBLESIDED")
+	if(unshaded):
+		defines.append("MY_UNSHADED")
 	if(outline):
 		defines.append("MY_OUTLINE")
 	if(edgeOutline || edgeOutlineExtra):
@@ -263,6 +279,8 @@ func calculateShaderResource() -> Array:
 		defines.append("MY_CUSTOM_SHADING")
 	if(messLayer):
 		defines.append("MY_MESSLAYER")
+	if(albedoMatcap):
+		defines.append("MY_ALBEDO_MATCAP")
 	var definesText:String = ""
 	for define in defines:
 		definesText += "#define "+define+"\n"

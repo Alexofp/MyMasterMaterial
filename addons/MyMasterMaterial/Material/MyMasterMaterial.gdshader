@@ -17,6 +17,9 @@ specular_schlick_ggx,
 #ifdef MY_SUBSURFACESCATTER_SKIN
 sss_mode_skin,
 #endif
+#ifdef MY_UNSHADED
+unshaded,
+#endif
 #ifdef MY_DOUBLESIDED
 cull_disabled
 #else
@@ -202,6 +205,18 @@ void fragment() {
 	NORMAL_MAP_DEPTH = normal_scale;
 	AO_LIGHT_AFFECT = ao_light_affect;
 	SPECULAR = specular;
+	
+#ifdef MY_ALBEDO_MATCAP
+{
+	//vec2 matcapUV = (NORMAL.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
+	//ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
+	
+	// With normal map support
+	vec3 normalV = mat3(TANGENT, BINORMAL, NORMAL) * (NORMAL_MAP.xyz*2.0-1.0);
+	vec2 matcapUV = (normalV.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
+	ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
+}
+#endif
 
 #ifdef MY_COLORMASK
 {

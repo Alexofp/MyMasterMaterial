@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d0vt3k10647w4"
-path.s3tc="res://.godot/imported/matcap_basic.png-dcfe50dbf07aa7ec235b6eb063a8555c.s3tc.ctex"
+uid="uid://b0peo7r5tiuwt"
+path.s3tc="res://.godot/imported/matcap_latex.png-53d3009bc216297062b771e64a5cd298.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://addons/MyMasterMaterial/Demo/Textures/matcap_basic.png"
-dest_files=["res://.godot/imported/matcap_basic.png-dcfe50dbf07aa7ec235b6eb063a8555c.s3tc.ctex"]
+source_file="res://addons/MyMasterMaterial/Demo/Textures/matcap_latex.png"
+dest_files=["res://.godot/imported/matcap_latex.png-53d3009bc216297062b771e64a5cd298.s3tc.ctex"]
 
 [params]
 
