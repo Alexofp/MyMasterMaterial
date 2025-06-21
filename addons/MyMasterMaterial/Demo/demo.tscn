@@ -91,7 +91,12 @@ cull_back
 ;
 
 uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
+#ifdef MY_NORMAL_MAP
 uniform sampler2D texture_normal : hint_roughness_normal, filter_linear_mipmap, repeat_enable;
+#endif
+#ifdef MY_BENT_NORMAL_MAP
+uniform sampler2D texture_bent_normal : hint_roughness_normal, filter_linear_mipmap, repeat_enable;
+#endif
 #ifdef MY_PBR_TREE_TEXTURES
 uniform sampler2D texture_ambient_occlusion : hint_default_white, filter_linear_mipmap, repeat_enable;
 uniform sampler2D texture_roughness : hint_roughness_r, filter_linear_mipmap, repeat_enable;
@@ -259,8 +264,13 @@ void fragment() {
 #endif
 
 	ALBEDO = albedo.rgb * albedo_tex.rgb;
+#ifdef MY_NORMAL_MAP
 	NORMAL_MAP = texture(texture_normal, base_uv).rgb;
-	
+#endif
+#ifdef MY_BENT_NORMAL_MAP
+	BENT_NORMAL_MAP = texture(texture_bent_normal, base_uv).rgb;
+#endif
+
 	AO = bilinearLerp(orm_tex.r, ao_mult);
 	ROUGHNESS = bilinearLerp(orm_tex.g, roughness);
 	METALLIC = bilinearLerp(orm_tex.b, metallic);
@@ -268,22 +278,23 @@ void fragment() {
 	NORMAL_MAP_DEPTH = normal_scale;
 	AO_LIGHT_AFFECT = ao_light_affect;
 	SPECULAR = specular;
-	
+
 #ifdef MY_ALBEDO_MATCAP
 {
-	vec2 matcapUV = (NORMAL.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
-	ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
-	
-	//vec3 normalV = mat3(TANGENT, BINORMAL, NORMAL) * (NORMAL_MAP.xyz*2.0-1.0);
-	//vec2 matcapUV = normalV.xy * vec2(0.49, -0.49) + 0.5;
+	//vec2 matcapUV = (NORMAL.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
 	//ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
+
+	// With normal map support
+	vec3 normalV = mat3(TANGENT, BINORMAL, NORMAL) * (NORMAL_MAP.xyz*2.0-1.0);
+	vec2 matcapUV = (normalV.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
+	ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
 }
 #endif
 
 #ifdef MY_COLORMASK
 {
 	vec4 colormask_tex = texture(texture_color_mask, base_uv);
-	
+
 	float maskSum = colormask_tex.r + colormask_tex.g + colormask_tex.b;
 	maskSum = max(maskSum, 1.0);
 	colormask_tex.rgb /= maskSum;
@@ -358,15 +369,15 @@ void fragment() {
 
 	vec4 mess_tex = texture(texture_mess_layer, (base_uv + vec2(messScroll*3.3, messScroll) - vec2(0.0, TIME*0.001))*messLayerScale);
 	vec4 mess_mask_tex = texture(texture_mess_mask, base_uv);
-	
+
 	float messValue = mess_tex.a;
 	float messAlphaAlpha = smoothstep(messCutoff, messCutoff + messSmoothSize, messValue * (1.0 - messSmoothSize) + messSmoothSize);
-	
+
 	float messAlpha = mess_tex.a * mess_mask_tex.r * messColor.a * messAlphaAlpha;
-	
+
 	ALBEDO = mix(ALBEDO, mess_tex.rgb*messColor.rgb, messAlpha);
 	ROUGHNESS = mix(ROUGHNESS, messRoughness, messAlpha);
-	
+
 	BACKLIGHT = mix(BACKLIGHT, vec3(0.5, 0.5, 0.5), messAlpha);
 	//SPECULAR = 3.0;//mix(SPECULAR, 30.0, min(messAlpha*3.0, 1.0));
 	//RIM = mix(RIM, 1.0, messAlpha);
@@ -381,7 +392,7 @@ void fragment() {
 	float edgeOutline = dot(dxOutline, dxOutline) + dot(dyOutline, dyOutline);
 	edgeOutline /= dot(VERTEX, VERTEX);
 	edgeOutline /= (VIEWPORT_SIZE.x / VIEWPORT_SIZE.y);
-	
+
 #ifdef MY_EDGE_OUTLINE_1
 	{
 		float finalOutline = edgeOutline * outline1_thickness;
@@ -437,18 +448,18 @@ float light_fresnel(float amount, vec3 normal, vec3 view)
 
 void light(){
 	float NdotL = dot(NORMAL + normal_bias, LIGHT + light_bias);
-	
+
 	float rounded = smoothstep(shadow_size, shadow_blend + shadow_size, NdotL);
 	rounded = mix(1.0, rounded, shadow_color.a);
 	float one_minus = 1.0 - rounded;
 	vec3 mult1 = LIGHT_COLOR * rounded * light_tint.rgb * ATTENUATION;
 	vec3 mult2 = (one_minus * 1.4 * shadow_color.rgb) - shadow_extra_intensity;
 	vec3 add1 = mult1 + mult2;
-	
+
 	float add3  = rimlight_blend + rimlight_size;
 	float basic_fresnel = light_fresnel(1.0, NORMAL, VIEW);
 	float smoothed = smoothstep(rimlight_size, add3, basic_fresnel);
-	
+
 	vec3 add2 = add1 + smoothed * rimlight_color.rgb;
 	DIFFUSE_LIGHT += ALBEDO * add2;
 }
@@ -477,6 +488,7 @@ shader_parameter/rimlight_color = Color(1, 1, 1, 1)
 shader_parameter/normal_bias = Vector3(0, 0, 0)
 shader_parameter/light_bias = Vector3(0, 0, 0)
 script = ExtResource("4_ggw85")
+normalMap = 0
 pbrSetup = 0
 subsurfaceScattering = 0
 backlight = false
@@ -534,7 +546,12 @@ cull_back
 ;
 
 uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
+#ifdef MY_NORMAL_MAP
 uniform sampler2D texture_normal : hint_roughness_normal, filter_linear_mipmap, repeat_enable;
+#endif
+#ifdef MY_BENT_NORMAL_MAP
+uniform sampler2D texture_bent_normal : hint_roughness_normal, filter_linear_mipmap, repeat_enable;
+#endif
 #ifdef MY_PBR_TREE_TEXTURES
 uniform sampler2D texture_ambient_occlusion : hint_default_white, filter_linear_mipmap, repeat_enable;
 uniform sampler2D texture_roughness : hint_roughness_r, filter_linear_mipmap, repeat_enable;
@@ -702,8 +719,13 @@ void fragment() {
 #endif
 
 	ALBEDO = albedo.rgb * albedo_tex.rgb;
+#ifdef MY_NORMAL_MAP
 	NORMAL_MAP = texture(texture_normal, base_uv).rgb;
-	
+#endif
+#ifdef MY_BENT_NORMAL_MAP
+	BENT_NORMAL_MAP = texture(texture_bent_normal, base_uv).rgb;
+#endif
+
 	AO = bilinearLerp(orm_tex.r, ao_mult);
 	ROUGHNESS = bilinearLerp(orm_tex.g, roughness);
 	METALLIC = bilinearLerp(orm_tex.b, metallic);
@@ -711,22 +733,23 @@ void fragment() {
 	NORMAL_MAP_DEPTH = normal_scale;
 	AO_LIGHT_AFFECT = ao_light_affect;
 	SPECULAR = specular;
-	
+
 #ifdef MY_ALBEDO_MATCAP
 {
-	vec2 matcapUV = (NORMAL.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
-	ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
-	
-	//vec3 normalV = mat3(TANGENT, BINORMAL, NORMAL) * (NORMAL_MAP.xyz*2.0-1.0);
-	//vec2 matcapUV = normalV.xy * vec2(0.49, -0.49) + 0.5;
+	//vec2 matcapUV = (NORMAL.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
 	//ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
+
+	// With normal map support
+	vec3 normalV = mat3(TANGENT, BINORMAL, NORMAL) * (NORMAL_MAP.xyz*2.0-1.0);
+	vec2 matcapUV = (normalV.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
+	ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
 }
 #endif
 
 #ifdef MY_COLORMASK
 {
 	vec4 colormask_tex = texture(texture_color_mask, base_uv);
-	
+
 	float maskSum = colormask_tex.r + colormask_tex.g + colormask_tex.b;
 	maskSum = max(maskSum, 1.0);
 	colormask_tex.rgb /= maskSum;
@@ -801,15 +824,15 @@ void fragment() {
 
 	vec4 mess_tex = texture(texture_mess_layer, (base_uv + vec2(messScroll*3.3, messScroll) - vec2(0.0, TIME*0.001))*messLayerScale);
 	vec4 mess_mask_tex = texture(texture_mess_mask, base_uv);
-	
+
 	float messValue = mess_tex.a;
 	float messAlphaAlpha = smoothstep(messCutoff, messCutoff + messSmoothSize, messValue * (1.0 - messSmoothSize) + messSmoothSize);
-	
+
 	float messAlpha = mess_tex.a * mess_mask_tex.r * messColor.a * messAlphaAlpha;
-	
+
 	ALBEDO = mix(ALBEDO, mess_tex.rgb*messColor.rgb, messAlpha);
 	ROUGHNESS = mix(ROUGHNESS, messRoughness, messAlpha);
-	
+
 	BACKLIGHT = mix(BACKLIGHT, vec3(0.5, 0.5, 0.5), messAlpha);
 	//SPECULAR = 3.0;//mix(SPECULAR, 30.0, min(messAlpha*3.0, 1.0));
 	//RIM = mix(RIM, 1.0, messAlpha);
@@ -824,7 +847,7 @@ void fragment() {
 	float edgeOutline = dot(dxOutline, dxOutline) + dot(dyOutline, dyOutline);
 	edgeOutline /= dot(VERTEX, VERTEX);
 	edgeOutline /= (VIEWPORT_SIZE.x / VIEWPORT_SIZE.y);
-	
+
 #ifdef MY_EDGE_OUTLINE_1
 	{
 		float finalOutline = edgeOutline * outline1_thickness;
@@ -880,18 +903,18 @@ float light_fresnel(float amount, vec3 normal, vec3 view)
 
 void light(){
 	float NdotL = dot(NORMAL + normal_bias, LIGHT + light_bias);
-	
+
 	float rounded = smoothstep(shadow_size, shadow_blend + shadow_size, NdotL);
 	rounded = mix(1.0, rounded, shadow_color.a);
 	float one_minus = 1.0 - rounded;
 	vec3 mult1 = LIGHT_COLOR * rounded * light_tint.rgb * ATTENUATION;
 	vec3 mult2 = (one_minus * 1.4 * shadow_color.rgb) - shadow_extra_intensity;
 	vec3 add1 = mult1 + mult2;
-	
+
 	float add3  = rimlight_blend + rimlight_size;
 	float basic_fresnel = light_fresnel(1.0, NORMAL, VIEW);
 	float smoothed = smoothstep(rimlight_size, add3, basic_fresnel);
-	
+
 	vec3 add2 = add1 + smoothed * rimlight_color.rgb;
 	DIFFUSE_LIGHT += ALBEDO * add2;
 }
@@ -916,6 +939,7 @@ shader_parameter/outline2_thickness = 459.47
 shader_parameter/outline2_contrast = 2.27
 shader_parameter/outline2_color = Color(0, 0, 0.686275, 1)
 script = ExtResource("4_ggw85")
+normalMap = 0
 pbrSetup = 0
 subsurfaceScattering = 0
 backlight = false
@@ -976,6 +1000,7 @@ shadow_mesh = SubResource("ArrayMesh_a63h6")
 [sub_resource type="Shader" id="Shader_4gw31"]
 code = "shader_type spatial;
 
+#define MY_NORMAL_MAP
 #define MY_UNSHADED
 #define MY_ALBEDO_MATCAP
 
@@ -1006,7 +1031,12 @@ cull_back
 ;
 
 uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
+#ifdef MY_NORMAL_MAP
 uniform sampler2D texture_normal : hint_roughness_normal, filter_linear_mipmap, repeat_enable;
+#endif
+#ifdef MY_BENT_NORMAL_MAP
+uniform sampler2D texture_bent_normal : hint_roughness_normal, filter_linear_mipmap, repeat_enable;
+#endif
 #ifdef MY_PBR_TREE_TEXTURES
 uniform sampler2D texture_ambient_occlusion : hint_default_white, filter_linear_mipmap, repeat_enable;
 uniform sampler2D texture_roughness : hint_roughness_r, filter_linear_mipmap, repeat_enable;
@@ -1174,8 +1204,13 @@ void fragment() {
 #endif
 
 	ALBEDO = albedo.rgb * albedo_tex.rgb;
+#ifdef MY_NORMAL_MAP
 	NORMAL_MAP = texture(texture_normal, base_uv).rgb;
-	
+#endif
+#ifdef MY_BENT_NORMAL_MAP
+	BENT_NORMAL_MAP = texture(texture_bent_normal, base_uv).rgb;
+#endif
+
 	AO = bilinearLerp(orm_tex.r, ao_mult);
 	ROUGHNESS = bilinearLerp(orm_tex.g, roughness);
 	METALLIC = bilinearLerp(orm_tex.b, metallic);
@@ -1183,12 +1218,12 @@ void fragment() {
 	NORMAL_MAP_DEPTH = normal_scale;
 	AO_LIGHT_AFFECT = ao_light_affect;
 	SPECULAR = specular;
-	
+
 #ifdef MY_ALBEDO_MATCAP
 {
 	//vec2 matcapUV = (NORMAL.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
 	//ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
-	
+
 	// With normal map support
 	vec3 normalV = mat3(TANGENT, BINORMAL, NORMAL) * (NORMAL_MAP.xyz*2.0-1.0);
 	vec2 matcapUV = (normalV.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
@@ -1199,7 +1234,7 @@ void fragment() {
 #ifdef MY_COLORMASK
 {
 	vec4 colormask_tex = texture(texture_color_mask, base_uv);
-	
+
 	float maskSum = colormask_tex.r + colormask_tex.g + colormask_tex.b;
 	maskSum = max(maskSum, 1.0);
 	colormask_tex.rgb /= maskSum;
@@ -1274,15 +1309,15 @@ void fragment() {
 
 	vec4 mess_tex = texture(texture_mess_layer, (base_uv + vec2(messScroll*3.3, messScroll) - vec2(0.0, TIME*0.001))*messLayerScale);
 	vec4 mess_mask_tex = texture(texture_mess_mask, base_uv);
-	
+
 	float messValue = mess_tex.a;
 	float messAlphaAlpha = smoothstep(messCutoff, messCutoff + messSmoothSize, messValue * (1.0 - messSmoothSize) + messSmoothSize);
-	
+
 	float messAlpha = mess_tex.a * mess_mask_tex.r * messColor.a * messAlphaAlpha;
-	
+
 	ALBEDO = mix(ALBEDO, mess_tex.rgb*messColor.rgb, messAlpha);
 	ROUGHNESS = mix(ROUGHNESS, messRoughness, messAlpha);
-	
+
 	BACKLIGHT = mix(BACKLIGHT, vec3(0.5, 0.5, 0.5), messAlpha);
 	//SPECULAR = 3.0;//mix(SPECULAR, 30.0, min(messAlpha*3.0, 1.0));
 	//RIM = mix(RIM, 1.0, messAlpha);
@@ -1297,7 +1332,7 @@ void fragment() {
 	float edgeOutline = dot(dxOutline, dxOutline) + dot(dyOutline, dyOutline);
 	edgeOutline /= dot(VERTEX, VERTEX);
 	edgeOutline /= (VIEWPORT_SIZE.x / VIEWPORT_SIZE.y);
-	
+
 #ifdef MY_EDGE_OUTLINE_1
 	{
 		float finalOutline = edgeOutline * outline1_thickness;
@@ -1353,18 +1388,18 @@ float light_fresnel(float amount, vec3 normal, vec3 view)
 
 void light(){
 	float NdotL = dot(NORMAL + normal_bias, LIGHT + light_bias);
-	
+
 	float rounded = smoothstep(shadow_size, shadow_blend + shadow_size, NdotL);
 	rounded = mix(1.0, rounded, shadow_color.a);
 	float one_minus = 1.0 - rounded;
 	vec3 mult1 = LIGHT_COLOR * rounded * light_tint.rgb * ATTENUATION;
 	vec3 mult2 = (one_minus * 1.4 * shadow_color.rgb) - shadow_extra_intensity;
 	vec3 add1 = mult1 + mult2;
-	
+
 	float add3  = rimlight_blend + rimlight_size;
 	float basic_fresnel = light_fresnel(1.0, NORMAL, VIEW);
 	float smoothed = smoothstep(rimlight_size, add3, basic_fresnel);
-	
+
 	vec3 add2 = add1 + smoothed * rimlight_color.rgb;
 	DIFFUSE_LIGHT += ALBEDO * add2;
 }
@@ -1384,6 +1419,7 @@ shader_parameter/metallic = 1.0
 shader_parameter/uv1_scale = Vector3(1, 1, 1)
 shader_parameter/uv1_offset = Vector3(0, 0, 0)
 script = ExtResource("4_ggw85")
+normalMap = 1
 pbrSetup = 0
 subsurfaceScattering = 0
 backlight = false
@@ -1441,7 +1477,7 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_xmd0r")
 
-[sub_resource type="Shader" id="Shader_jsrus"]
+[sub_resource type="Shader" id="Shader_h4o66"]
 code = "shader_type spatial;
 
 #define MY_MESSLAYER
@@ -1473,7 +1509,12 @@ cull_back
 ;
 
 uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
+#ifdef MY_NORMAL_MAP
 uniform sampler2D texture_normal : hint_roughness_normal, filter_linear_mipmap, repeat_enable;
+#endif
+#ifdef MY_BENT_NORMAL_MAP
+uniform sampler2D texture_bent_normal : hint_roughness_normal, filter_linear_mipmap, repeat_enable;
+#endif
 #ifdef MY_PBR_TREE_TEXTURES
 uniform sampler2D texture_ambient_occlusion : hint_default_white, filter_linear_mipmap, repeat_enable;
 uniform sampler2D texture_roughness : hint_roughness_r, filter_linear_mipmap, repeat_enable;
@@ -1641,8 +1682,13 @@ void fragment() {
 #endif
 
 	ALBEDO = albedo.rgb * albedo_tex.rgb;
+#ifdef MY_NORMAL_MAP
 	NORMAL_MAP = texture(texture_normal, base_uv).rgb;
-	
+#endif
+#ifdef MY_BENT_NORMAL_MAP
+	BENT_NORMAL_MAP = texture(texture_bent_normal, base_uv).rgb;
+#endif
+
 	AO = bilinearLerp(orm_tex.r, ao_mult);
 	ROUGHNESS = bilinearLerp(orm_tex.g, roughness);
 	METALLIC = bilinearLerp(orm_tex.b, metallic);
@@ -1650,22 +1696,23 @@ void fragment() {
 	NORMAL_MAP_DEPTH = normal_scale;
 	AO_LIGHT_AFFECT = ao_light_affect;
 	SPECULAR = specular;
-	
+
 #ifdef MY_ALBEDO_MATCAP
 {
-	vec2 matcapUV = (NORMAL.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
-	ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
-	
-	//vec3 normalV = mat3(TANGENT, BINORMAL, NORMAL) * (NORMAL_MAP.xyz*2.0-1.0);
-	//vec2 matcapUV = normalV.xy * vec2(0.49, -0.49) + 0.5;
+	//vec2 matcapUV = (NORMAL.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
 	//ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
+
+	// With normal map support
+	vec3 normalV = mat3(TANGENT, BINORMAL, NORMAL) * (NORMAL_MAP.xyz*2.0-1.0);
+	vec2 matcapUV = (normalV.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
+	ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
 }
 #endif
 
 #ifdef MY_COLORMASK
 {
 	vec4 colormask_tex = texture(texture_color_mask, base_uv);
-	
+
 	float maskSum = colormask_tex.r + colormask_tex.g + colormask_tex.b;
 	maskSum = max(maskSum, 1.0);
 	colormask_tex.rgb /= maskSum;
@@ -1740,15 +1787,15 @@ void fragment() {
 
 	vec4 mess_tex = texture(texture_mess_layer, (base_uv + vec2(messScroll*3.3, messScroll) - vec2(0.0, TIME*0.001))*messLayerScale);
 	vec4 mess_mask_tex = texture(texture_mess_mask, base_uv);
-	
+
 	float messValue = mess_tex.a;
 	float messAlphaAlpha = smoothstep(messCutoff, messCutoff + messSmoothSize, messValue * (1.0 - messSmoothSize) + messSmoothSize);
-	
+
 	float messAlpha = mess_tex.a * mess_mask_tex.r * messColor.a * messAlphaAlpha;
-	
+
 	ALBEDO = mix(ALBEDO, mess_tex.rgb*messColor.rgb, messAlpha);
 	ROUGHNESS = mix(ROUGHNESS, messRoughness, messAlpha);
-	
+
 	BACKLIGHT = mix(BACKLIGHT, vec3(0.5, 0.5, 0.5), messAlpha);
 	//SPECULAR = 3.0;//mix(SPECULAR, 30.0, min(messAlpha*3.0, 1.0));
 	//RIM = mix(RIM, 1.0, messAlpha);
@@ -1763,7 +1810,7 @@ void fragment() {
 	float edgeOutline = dot(dxOutline, dxOutline) + dot(dyOutline, dyOutline);
 	edgeOutline /= dot(VERTEX, VERTEX);
 	edgeOutline /= (VIEWPORT_SIZE.x / VIEWPORT_SIZE.y);
-	
+
 #ifdef MY_EDGE_OUTLINE_1
 	{
 		float finalOutline = edgeOutline * outline1_thickness;
@@ -1819,18 +1866,18 @@ float light_fresnel(float amount, vec3 normal, vec3 view)
 
 void light(){
 	float NdotL = dot(NORMAL + normal_bias, LIGHT + light_bias);
-	
+
 	float rounded = smoothstep(shadow_size, shadow_blend + shadow_size, NdotL);
 	rounded = mix(1.0, rounded, shadow_color.a);
 	float one_minus = 1.0 - rounded;
 	vec3 mult1 = LIGHT_COLOR * rounded * light_tint.rgb * ATTENUATION;
 	vec3 mult2 = (one_minus * 1.4 * shadow_color.rgb) - shadow_extra_intensity;
 	vec3 add1 = mult1 + mult2;
-	
+
 	float add3  = rimlight_blend + rimlight_size;
 	float basic_fresnel = light_fresnel(1.0, NORMAL, VIEW);
 	float smoothed = smoothstep(rimlight_size, add3, basic_fresnel);
-	
+
 	vec3 add2 = add1 + smoothed * rimlight_color.rgb;
 	DIFFUSE_LIGHT += ALBEDO * add2;
 }
@@ -1849,7 +1896,7 @@ noise = SubResource("FastNoiseLite_2b8vd")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_4wvf8"]
 render_priority = 0
-shader = SubResource("Shader_jsrus")
+shader = SubResource("Shader_h4o66")
 shader_parameter/albedo = Color(1, 0.714, 0.61, 1)
 shader_parameter/normal_scale = 1.0
 shader_parameter/ao_light_affect = 0.0
@@ -1868,6 +1915,7 @@ shader_parameter/messScroll = 0.0
 shader_parameter/messCutoff = 0.0
 shader_parameter/messSmoothSize = 0.1
 script = ExtResource("4_ggw85")
+normalMap = 0
 pbrSetup = 0
 subsurfaceScattering = 0
 backlight = false
@@ -1891,7 +1939,7 @@ albedoMatcap = false
 clearCache = false
 metadata/_custom_type_script = "uid://bk8a3rmejmdn"
 
-[sub_resource type="Shader" id="Shader_tqsko"]
+[sub_resource type="Shader" id="Shader_2b8vd"]
 code = "shader_type spatial;
 
 #define MY_COLORMASK
@@ -1923,7 +1971,12 @@ cull_back
 ;
 
 uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
+#ifdef MY_NORMAL_MAP
 uniform sampler2D texture_normal : hint_roughness_normal, filter_linear_mipmap, repeat_enable;
+#endif
+#ifdef MY_BENT_NORMAL_MAP
+uniform sampler2D texture_bent_normal : hint_roughness_normal, filter_linear_mipmap, repeat_enable;
+#endif
 #ifdef MY_PBR_TREE_TEXTURES
 uniform sampler2D texture_ambient_occlusion : hint_default_white, filter_linear_mipmap, repeat_enable;
 uniform sampler2D texture_roughness : hint_roughness_r, filter_linear_mipmap, repeat_enable;
@@ -2091,8 +2144,13 @@ void fragment() {
 #endif
 
 	ALBEDO = albedo.rgb * albedo_tex.rgb;
+#ifdef MY_NORMAL_MAP
 	NORMAL_MAP = texture(texture_normal, base_uv).rgb;
-	
+#endif
+#ifdef MY_BENT_NORMAL_MAP
+	BENT_NORMAL_MAP = texture(texture_bent_normal, base_uv).rgb;
+#endif
+
 	AO = bilinearLerp(orm_tex.r, ao_mult);
 	ROUGHNESS = bilinearLerp(orm_tex.g, roughness);
 	METALLIC = bilinearLerp(orm_tex.b, metallic);
@@ -2100,22 +2158,23 @@ void fragment() {
 	NORMAL_MAP_DEPTH = normal_scale;
 	AO_LIGHT_AFFECT = ao_light_affect;
 	SPECULAR = specular;
-	
+
 #ifdef MY_ALBEDO_MATCAP
 {
-	vec2 matcapUV = (NORMAL.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
-	ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
-	
-	//vec3 normalV = mat3(TANGENT, BINORMAL, NORMAL) * (NORMAL_MAP.xyz*2.0-1.0);
-	//vec2 matcapUV = normalV.xy * vec2(0.49, -0.49) + 0.5;
+	//vec2 matcapUV = (NORMAL.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
 	//ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
+
+	// With normal map support
+	vec3 normalV = mat3(TANGENT, BINORMAL, NORMAL) * (NORMAL_MAP.xyz*2.0-1.0);
+	vec2 matcapUV = (normalV.xy * vec2(0.5, -0.5) + vec2(0.5, 0.5));
+	ALBEDO = texture(texture_albedo, matcapUV).rgb * albedo.rgb;
 }
 #endif
 
 #ifdef MY_COLORMASK
 {
 	vec4 colormask_tex = texture(texture_color_mask, base_uv);
-	
+
 	float maskSum = colormask_tex.r + colormask_tex.g + colormask_tex.b;
 	maskSum = max(maskSum, 1.0);
 	colormask_tex.rgb /= maskSum;
@@ -2190,15 +2249,15 @@ void fragment() {
 
 	vec4 mess_tex = texture(texture_mess_layer, (base_uv + vec2(messScroll*3.3, messScroll) - vec2(0.0, TIME*0.001))*messLayerScale);
 	vec4 mess_mask_tex = texture(texture_mess_mask, base_uv);
-	
+
 	float messValue = mess_tex.a;
 	float messAlphaAlpha = smoothstep(messCutoff, messCutoff + messSmoothSize, messValue * (1.0 - messSmoothSize) + messSmoothSize);
-	
+
 	float messAlpha = mess_tex.a * mess_mask_tex.r * messColor.a * messAlphaAlpha;
-	
+
 	ALBEDO = mix(ALBEDO, mess_tex.rgb*messColor.rgb, messAlpha);
 	ROUGHNESS = mix(ROUGHNESS, messRoughness, messAlpha);
-	
+
 	BACKLIGHT = mix(BACKLIGHT, vec3(0.5, 0.5, 0.5), messAlpha);
 	//SPECULAR = 3.0;//mix(SPECULAR, 30.0, min(messAlpha*3.0, 1.0));
 	//RIM = mix(RIM, 1.0, messAlpha);
@@ -2213,7 +2272,7 @@ void fragment() {
 	float edgeOutline = dot(dxOutline, dxOutline) + dot(dyOutline, dyOutline);
 	edgeOutline /= dot(VERTEX, VERTEX);
 	edgeOutline /= (VIEWPORT_SIZE.x / VIEWPORT_SIZE.y);
-	
+
 #ifdef MY_EDGE_OUTLINE_1
 	{
 		float finalOutline = edgeOutline * outline1_thickness;
@@ -2269,18 +2328,18 @@ float light_fresnel(float amount, vec3 normal, vec3 view)
 
 void light(){
 	float NdotL = dot(NORMAL + normal_bias, LIGHT + light_bias);
-	
+
 	float rounded = smoothstep(shadow_size, shadow_blend + shadow_size, NdotL);
 	rounded = mix(1.0, rounded, shadow_color.a);
 	float one_minus = 1.0 - rounded;
 	vec3 mult1 = LIGHT_COLOR * rounded * light_tint.rgb * ATTENUATION;
 	vec3 mult2 = (one_minus * 1.4 * shadow_color.rgb) - shadow_extra_intensity;
 	vec3 add1 = mult1 + mult2;
-	
+
 	float add3  = rimlight_blend + rimlight_size;
 	float basic_fresnel = light_fresnel(1.0, NORMAL, VIEW);
 	float smoothed = smoothstep(rimlight_size, add3, basic_fresnel);
-	
+
 	vec3 add2 = add1 + smoothed * rimlight_color.rgb;
 	DIFFUSE_LIGHT += ALBEDO * add2;
 }
@@ -2298,7 +2357,7 @@ noise = SubResource("FastNoiseLite_607jx")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_xmd0r"]
 render_priority = 0
-shader = SubResource("Shader_tqsko")
+shader = SubResource("Shader_2b8vd")
 shader_parameter/albedo = Color(0, 0, 0, 1)
 shader_parameter/normal_scale = 1.0
 shader_parameter/ao_light_affect = 0.0
@@ -2313,6 +2372,7 @@ shader_parameter/color_mask_r = Color(1, 0, 0, 1)
 shader_parameter/color_mask_g = Color(0, 1, 0, 1)
 shader_parameter/color_mask_b = Color(0, 0, 1, 1)
 script = ExtResource("4_ggw85")
+normalMap = 0
 pbrSetup = 0
 subsurfaceScattering = 0
 backlight = false

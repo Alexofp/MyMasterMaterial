@@ -5,6 +5,18 @@ class_name MyMasterMaterial
 const ShaderPath = "res://addons/MyMasterMaterial/Material/MyMasterMaterial.gdshader"
 
 @export_group("PBR")
+enum NormalMapSetup {
+	## No normal map support
+	None,
+	## A standard normal map
+	NormalMap,
+	## A special normal map that also encodes the ambience occulusion
+	BentNormalMap,
+}
+@export var normalMap:NormalMapSetup = NormalMapSetup.None:
+	set(value):
+		normalMap = value
+		updateShader()
 enum PBRSetup {
 	## Do not include any kind of ao/roughness/metallic maps
 	None,
@@ -127,6 +139,7 @@ static var cachedUniformNames:Dictionary = {}
 var uniformNames:Array = []
 
 func copyFrom(otherShader:MyMasterMaterial, ignoreUniforms:Array = []):
+	normalMap = otherShader.normalMap
 	pbrSetup = otherShader.pbrSetup
 	backlight = otherShader.backlight
 	freshnel = otherShader.freshnel
@@ -160,6 +173,12 @@ func _init():
 
 func calculateShaderVariantString() -> String:
 	var theFlags:Array = []
+	if(normalMap == NormalMapSetup.None):
+		theFlags.append("non")
+	if(normalMap == NormalMapSetup.NormalMap):
+		theFlags.append("n")
+	if(normalMap == NormalMapSetup.BentNormalMap):
+		theFlags.append("bn")
 	if(pbrSetup == PBRSetup.None):
 		theFlags.append("nopbr")
 	elif(pbrSetup == PBRSetup.ThreeTextures):
@@ -222,6 +241,10 @@ func calculateShaderResource() -> Array:
 	var copyResource := masterResource.duplicate(true)
 	
 	var defines:Array = []
+	if(normalMap == NormalMapSetup.NormalMap):
+		defines.append("MY_NORMAL_MAP")
+	elif(normalMap == NormalMapSetup.BentNormalMap):
+		defines.append("MY_BENT_NORMAL_MAP")
 	if(pbrSetup == PBRSetup.ThreeTextures):
 		defines.append("MY_PBR_TREE_TEXTURES")
 	elif(pbrSetup == PBRSetup.FourTextures):
