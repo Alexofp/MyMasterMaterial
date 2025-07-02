@@ -47,6 +47,14 @@ enum SubsurfaceScatteringType {
 	set(value):
 		subsurfaceScattering = value
 		updateShader()
+@export var clearcoat:bool = false:
+	set(value):
+		clearcoat = value
+		updateShader()
+@export var anisotropy:bool = false:
+	set(value):
+		anisotropy = value
+		updateShader()
 
 @export_group("STYLIZATION")
 @export var backlight:bool = false:
@@ -141,6 +149,8 @@ var uniformNames:Array = []
 func copyFrom(otherShader:MyMasterMaterial, ignoreUniforms:Array = []):
 	normalMap = otherShader.normalMap
 	pbrSetup = otherShader.pbrSetup
+	clearcoat = otherShader.clearcoat
+	anisotropy = otherShader.anisotropy
 	backlight = otherShader.backlight
 	freshnel = otherShader.freshnel
 	rimlight = otherShader.rimlight
@@ -191,6 +201,10 @@ func calculateShaderVariantString() -> String:
 		theFlags.append("orme")
 	elif(pbrSetup == PBRSetup.ORM_EmissionTexture):
 		theFlags.append("ormetex")
+	if(clearcoat):
+		theFlags.append("cc")
+	if(anisotropy):
+		theFlags.append("at")
 	if(backlight):
 		theFlags.append("b")
 	if(freshnel):
@@ -261,6 +275,10 @@ func calculateShaderResource() -> Array:
 		defines.append("MY_PBR_ORM")
 		defines.append("MY_PBR_EmissionTexture")
 		defines.append("MY_PBR_EMISSION")
+	if(clearcoat):
+		defines.append("MY_PBR_CLEARCOAT")
+	if(anisotropy):
+		defines.append("MY_PBR_ANISOTROPY")
 	if(backlight):
 		defines.append("MY_BACKLIGHT")
 	if(freshnel):

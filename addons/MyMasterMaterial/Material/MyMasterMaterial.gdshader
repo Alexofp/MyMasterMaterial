@@ -59,6 +59,16 @@ uniform vec3 emission : source_color = vec3(1.0);
 uniform float emission_energy : hint_range(0.0, 20.0, 0.01) = 1.0;
 #endif
 
+#ifdef MY_PBR_CLEARCOAT
+uniform float clearcoat : hint_range(0.0, 1.0, 0.01) = 1.0;
+uniform float clearcoat_roughness : hint_range(0.0, 1.0, 0.01) = 0.5;
+#endif
+
+#ifdef MY_PBR_ANISOTROPY
+uniform float anisotropy_ratio : hint_range(0.0, 1.0, 0.01) = 0.0;
+uniform sampler2D texture_anisotropy_flowmap : hint_anisotropy, filter_linear_mipmap, repeat_enable;
+#endif
+
 #ifdef MY_ALPHAMASK
 uniform sampler2D texture_alpha : hint_default_black, filter_nearest, repeat_enable;
 uniform float alpha_scissor_threshold : hint_range(0.0, 1.0, 0.001) = 0.5;
@@ -215,6 +225,17 @@ void fragment() {
 	NORMAL_MAP_DEPTH = normal_scale;
 	AO_LIGHT_AFFECT = ao_light_affect;
 	SPECULAR = specular;
+
+#ifdef MY_PBR_CLEARCOAT
+	CLEARCOAT = clearcoat;
+	CLEARCOAT_ROUGHNESS = clearcoat_roughness;
+#endif
+
+#ifdef MY_PBR_ANISOTROPY
+	vec3 anisotropy_tex = texture(texture_anisotropy_flowmap, base_uv).rga;
+	ANISOTROPY = anisotropy_ratio * anisotropy_tex.b;
+	ANISOTROPY_FLOW = anisotropy_tex.rg * 2.0 - 1.0;
+#endif
 
 #ifdef MY_ALBEDO_MATCAP
 {

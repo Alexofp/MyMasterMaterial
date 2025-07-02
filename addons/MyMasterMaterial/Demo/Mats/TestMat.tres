@@ -68,6 +68,15 @@ uniform vec3 emission : source_color = vec3(1.0);
 uniform float emission_energy : hint_range(0.0, 20.0, 0.01) = 1.0;
 #endif
 
+#ifdef MY_PBR_CLEARCOAT
+uniform float clearcoat : hint_range(0.0, 1.0, 0.01) = 1.0;
+uniform float clearcoat_roughness : hint_range(0.0, 1.0, 0.01) = 0.5;
+#endif
+
+#ifdef MY_PBR_ANISOTROPY
+uniform float anisotropy_ratio : hint_range(0.0, 1.0, 0.01) = 0.0;
+#endif
+
 #ifdef MY_ALPHAMASK
 uniform sampler2D texture_alpha : hint_default_black, filter_nearest, repeat_enable;
 uniform float alpha_scissor_threshold : hint_range(0.0, 1.0, 0.001) = 0.5;
@@ -224,6 +233,16 @@ void fragment() {
 	NORMAL_MAP_DEPTH = normal_scale;
 	AO_LIGHT_AFFECT = ao_light_affect;
 	SPECULAR = specular;
+
+#ifdef MY_PBR_CLEARCOAT
+	CLEARCOAT = clearcoat;
+	CLEARCOAT_ROUGHNESS = clearcoat_roughness;
+#endif
+
+#ifdef MY_PBR_ANISOTROPY
+	ANISOTROPY = anisotropy_ratio;
+	ANISOTROPY_FLOW = vec2(0.0, 0.0);
+#endif
 
 #ifdef MY_ALBEDO_MATCAP
 {
@@ -432,26 +451,7 @@ shader_parameter/outline1_thickness = 433.09
 shader_parameter/outline1_contrast = 1.0
 shader_parameter/outline1_color = Color(0, 0, 0, 1)
 script = ExtResource("1_po4si")
-normalMap = 0
-pbrSetup = 0
-subsurfaceScattering = 0
-backlight = false
 freshnel = true
 rimlight = true
 edgeOutline = true
-edgeOutlineExtra = false
-outline = false
-toonShading = false
-customToonShading = false
-alphaMask = false
-alphaTransparency = false
-doubleSided = false
-unshaded = false
-colorMask = false
-uvBasedDiscard = false
-globalDetailMask = false
-globalDetailRoughMask = false
-messLayer = false
-albedoMatcap = false
-clearCache = false
 metadata/_custom_type_script = "uid://bk8a3rmejmdn"
